@@ -65,13 +65,40 @@ module.exports.getBounties = (event, context, callback) => {
 }
 
 module.exports.claimBounty = (event, context, callback) => {
-  const response = {
-    statusCode: 201,
-    headers: {
-      'Access-Control-Allow-Origin': '*'
-    },
-    body: "Test response"
+  var docClient = new AWS.DynamoDB.DocumentClient();
+  /**
+   * Create new claim entry which references to bounty from bounties-table
+  */
+  var params = JSON.parse(event.body);
+  var claim = {
+    bountyId: params.bountyId,
+    userId: context.identity.cognitoIdentityId,
+    comments: params.comments,
   };
 
-  callback(null,response);
+  docClient.put({TableName: 'claims', Item: claim}, (error) => {
+    if (error) {
+      callback(null, { statusCode: 400, body: JSON.stringify(error) });
+    }
+
+    /**
+     * Increase claim count for bounty in bounties-table
+    */
+    var increase_claim_count_params = {
+      TableName: 'bounties-table',
+      Key: { id : params.bountyId },
+      UpdateExpression: 'set claim = claim + 1'
+    };
+
+    docClient.update(increase_claim_count_params, function(error) {
+      if (error) {
+        callback(null, { statusCode: 400, body: JSON.stringify(error) });
+        //todo:
+        //I think we should also remove claim entry we previosly added, if claim count increase fails.
+      }
+      else {
+        callback(null, { statusCode: 201, headers: { 'Access-Control-Allow-Origin': '*' }, body: "Claimed bounty" });
+      }
+    });
+  });
 }
