@@ -41,6 +41,13 @@ functions:
       - http:
           path: bounties
           method: get
+  claimBounty:
+    handler: handler.claimBounty
+    description: claim bounty
+    events:
+      - http:
+          path: bounties/claim/{id}
+          method: post
 
 resources:
   Resources:

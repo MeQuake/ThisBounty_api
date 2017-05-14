@@ -63,3 +63,15 @@ module.exports.getBounties = (event, context, callback) => {
     })
   });
 }
+
+module.exports.claimBounty = (event, context, callback) => {
+  const response = {
+    statusCode: 201,
+    headers: {
+      'Access-Control-Allow-Origin': '*'
+    },
+    body: "Test response"
+  };
+
+  callback(null,response);
+}
